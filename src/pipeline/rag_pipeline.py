@@ -4,8 +4,6 @@ from pipeline.template_provider import SevenWondersTemplateProvider
 from pipeline.component_factory import RAGComponentFactory
 from pipeline.pipeline_builder import PipelineBuilder
 
-# ===== Main RAG Pipeline Class =====
-
 class RAGPipeline:
     """Manages the Retrieval-Augmented Generation pipeline with conversational memory."""
     
@@ -22,7 +20,7 @@ class RAGPipeline:
         self.document_store = self.component_factory.create_document_store()
         self.doc_embedder = self.component_factory.create_document_embedder()
         
-        # Add document store to components dictionary for builder
+        # Create components dictionary for builder - store document_store separately
         self.components = {"document_store": self.document_store}
         
         # Initialize pipeline
@@ -48,6 +46,9 @@ class RAGPipeline:
         builder.add_components(self.model_name, self.api_base_url, temperature, max_tokens)
         builder.connect_components()
         self.pipeline = builder.build()
+
+        logging.info("RAG pipeline successfully built.")
+        logging.info(f"Pipeline: {self.pipeline.draw(path='pipeline.png')}")
         
         return self.pipeline
     
@@ -60,10 +61,12 @@ class RAGPipeline:
             "query_rephrase_prompt_builder": {"query": question},
             "prompt_builder": {"question": question},
             "memory_joiner": {"values": [ChatMessage.from_user(question)]}
-        })
-        
+        }
+        , include_outputs_from=["query_rephrase_llm", "llm"]
+        )
+
         # Log the rephrased query for debugging
         rephrased_query = response.get("query_rephrase_llm", {}).get("replies", [""])[0]
         logging.info(f"Rephrased query: {rephrased_query}")
-        
-        return response["llm"]["replies"][0].content
+  
+        return response["llm"]["replies"][0].text

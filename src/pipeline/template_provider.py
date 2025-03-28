@@ -16,7 +16,7 @@ class TemplateProvider(ABC):
         pass
     
     @abstractmethod
-    def get_query_rephrase_template(self) -> str:
+    def get_query_rephrase_template(self) -> List[ChatMessage]:
         """Returns the query rephrase template."""
         pass
 
@@ -50,18 +50,20 @@ class SevenWondersTemplateProvider(TemplateProvider):
             )
         ]
     
-    def get_query_rephrase_template(self) -> str:
-        return """
-            Rewrite the question for search while keeping its meaning and key terms intact.
-            If the conversation history is empty, DO NOT change the query.
-            Use conversation history only if necessary, and avoid extending the query with your own knowledge.
-            If no changes are needed, output the current question as is.
+    def get_query_rephrase_template(self) -> List[ChatMessage]:
+        return [
+            ChatMessage.from_user(
+                """Rewrite the question for search while keeping its meaning and key terms intact.
+                If the conversation history is empty, DO NOT change the query.
+                Use conversation history only if necessary, and avoid extending the query with your own knowledge.
+                If no changes are needed, output the current question as is.
 
-            Conversation history:
-            {% for memory in memories %}
-                {{ memory.text }}
-            {% endfor %}
+                Conversation history:
+                {% for memory in memories %}
+                    {{ memory.text }}
+                {% endfor %}
 
-            User Query: {{query}}
-            Rewritten Query:
-        """
+                User Query: {{query}}
+                Rewritten Query:"""
+            )
+        ]

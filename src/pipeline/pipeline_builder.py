@@ -36,7 +36,7 @@ class PipelineBuilder:
         
         # Query rephrasing components
         self.components["query_rephrase_prompt_builder"] = ChatPromptBuilder(
-            self.template_provider.get_query_rephrase_template())
+            template=self.template_provider.get_query_rephrase_template())
         
         self.components["query_rephrase_llm"] = self.component_factory.create_llm(
             model_name, api_base_url, temperature, max_tokens)
@@ -44,9 +44,9 @@ class PipelineBuilder:
         self.components["list_to_str_adapter"] = OutputAdapter(
             template="{{ replies[0] }}", output_type=str)
         
-        # RAG components
-        self.components["retriever"] = InMemoryEmbeddingRetriever(
-            document_store=self.components.get("document_store"))
+        # RAG components - use the document_store as a parameter, not a component
+        document_store = self.components.get("document_store")
+        self.components["retriever"] = InMemoryEmbeddingRetriever(document_store=document_store)
         
         self.components["prompt_builder"] = ChatPromptBuilder(
             template=self.template_provider.get_main_template(),
@@ -59,9 +59,16 @@ class PipelineBuilder:
         # Memory joiner
         self.components["memory_joiner"] = ListJoiner(List[ChatMessage])
         
-        # Add all components to pipeline
-        for name, component in self.components.items():
-            self.pipeline.add_component(name, component)
+        # Add only actual components to pipeline
+        component_names = [
+            "memory_retriever", "memory_writer", "text_embedder", 
+            "query_rephrase_prompt_builder", "query_rephrase_llm", "list_to_str_adapter",
+            "retriever", "prompt_builder", "llm", "memory_joiner"
+        ]
+        
+        for name in component_names:
+            if name in self.components:
+                self.pipeline.add_component(name, self.components[name])
         
         return self
     
