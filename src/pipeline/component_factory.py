@@ -18,6 +18,7 @@ from haystack_experimental.chat_message_stores.in_memory import InMemoryChatMess
 from haystack_experimental.components.retrievers import ChatMessageRetriever
 from haystack_experimental.components.writers import ChatMessageWriter
 from components.llm import LLMProvider
+import logging
 
 class ComponentFactory(ABC):
     """Abstract factory for creating pipeline components."""
@@ -54,9 +55,9 @@ class RAGComponentFactory(ComponentFactory):
                  config=None):
         """Initialize the factory with configuration."""
         self.config = config
-        self.vector_db_cfg = config.get("vector_db", {})
-        self.llm_cfg = config.get("llm", {})
-        self.embedding_cfg = config.get("embedding", {})
+        self.vector_db_cfg = self.config.get("vector_db", {})
+        self.llm_cfg = self.config.get("llm", {})
+        self.embedding_cfg = self.config.get("embedding", {})
 
     def create_document_store(self) -> MilvusDocumentStore:
         """Creates a Milvus document store.
@@ -67,13 +68,17 @@ class RAGComponentFactory(ComponentFactory):
             recreate: If True, drop and recreate the collection
         """
         if self.vector_db_cfg.get("load_type") == 'milvus-lite':
-            db_path = self.vector_db_cfg.get("db_path", os.environ.get("DB_PATH", "./milvus.db"))
+            db_path = self.vector_db_cfg.get("db_path")
             if not db_path:
                 raise ValueError("Database path is not set. Please provide a valid path.")
             # Continue with db_path setup
         collection_name = self.vector_db_cfg.get("collection_name")
         recreate = self.vector_db_cfg.get("recreate")
         dimension = self.vector_db_cfg.get("dimension")
+        logging.info(f"Creating Milvus document store with db_path: {db_path}, "
+                     f"collection_name: {collection_name}, recreate: {recreate}, "
+                     f"dimension: {dimension}")
+        # Create the document store
         return MilvusDocumentStore(
             connection_args={"uri": db_path},
             collection_name=collection_name,
@@ -87,14 +92,22 @@ class RAGComponentFactory(ComponentFactory):
             provider: One of 'sentence_transformers', 'openai', 'gemini'
             **kwargs: Additional parameters for the embedder
         """
+        logging.info(f"Creating document embedder with provider: {provider}")
+        sentence_transformers_cfg = self.embedding_cfg.get("sentence_transformers")
         if provider == "sentence_transformers":
-            model_name = kwargs.get("model_name", os.getenv("DOCUMENT_EMBEDDER_MODEL_NAME", 
-                                                           "sentence-transformers/all-MiniLM-L6-v2"))
+            model_name = kwargs.get("document_embedder", sentence_transformers_cfg.get("document_embedder"))
+            logging.info(f"Creating SentenceTransformersDocumentEmbedder with model: {model_name}")
             return SentenceTransformersDocumentEmbedder(model=model_name)
         
         elif provider == "openai":
-            api_key = kwargs.get("api_key", "your-openai-key")
-            model = kwargs.get("model", "text-embedding-ada-002")
+            openai_embedding_cfg = self.embedding_cfg.get("openai")
+            api_key = kwargs.get("api_key", openai_embedding_cfg.get("api_key"))
+            if not api_key:
+                raise ValueError("Document Embedding API key is not set. Please provide a valid OpenAI API key.")
+            model = kwargs.get("model", openai_embedding_cfg.get("model_name"))
+            if not model:
+                raise ValueError("Document Embedding model name is not set. Please provide a valid OpenAI model name.")
+            logging.info(f"Creating OpenAIDocumentEmbedder with model: {model}")
             return OpenAIDocumentEmbedder(api_key=Secret.from_token(api_key), model=model)
         
         else:
@@ -108,13 +121,20 @@ class RAGComponentFactory(ComponentFactory):
             **kwargs: Additional parameters for the embedder
         """
         if provider == "sentence_transformers":
-            model_name = kwargs.get("model_name", os.getenv("TEXT_EMBEDDER_MODEL_NAME", 
-                                                           "sentence-transformers/all-MiniLM-L6-v2"))
+            sentence_transformers_cfg = self.embedding_cfg.get("sentence_transformers")
+            model_name = kwargs.get("text_embedder", sentence_transformers_cfg.get("text_embedder"))
+            logging.info(f"Creating SentenceTransformersTextEmbedder with model: {model_name}")
             return SentenceTransformersTextEmbedder(model=model_name)
         
         elif provider == "openai":
-            api_key = kwargs.get("api_key", "your-openai-key")
-            model = kwargs.get("model", "text-embedding-ada-002")
+            openai_embedding_cfg = self.embedding_cfg.get("openai")
+            api_key = kwargs.get("api_key", openai_embedding_cfg.get("api_key"))
+            if not api_key:
+                raise ValueError("Text Embedding API key is not set. Please provide a valid OpenAI API key.")
+            model = kwargs.get("model", openai_embedding_cfg.get("model_name"))
+            if not model:
+                raise ValueError("Text Embedding model name is not set. Please provide a valid OpenAI model name.")
+            logging.info(f"Creating OpenAITextEmbedder with model: {model}")
             return OpenAITextEmbedder(api_key=Secret.from_token(api_key), model=model)
         
         else:
@@ -176,7 +196,6 @@ class RAGComponentFactory(ComponentFactory):
             base_url=api_base_url,
             generation_kwargs=generation_kwargs
         )
-        
         return llm_provider.create_llm()
     
     def create_retriever(self, document_store):

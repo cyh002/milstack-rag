@@ -11,8 +11,8 @@ class MilstackRAG:
     
     def __init__(self, config=None):
         self.config = config
-        self.doc_loader = DocumentLoader(datasets_config = config.get("datasets", {}))
-        self.rag_pipeline = RAGPipeline(config = config)
+        self.doc_loader = DocumentLoader(datasets_config = self.config.get("datasets", {}))
+        self.rag_pipeline = RAGPipeline(config = self.config)
         self.ui = None
         
     def setup(self):

@@ -12,7 +12,7 @@ class RAGPipeline:
                  config=None):
         # Initialize factories and providers
         self.config = config
-        self.component_factory = RAGComponentFactory(config=config)
+        self.component_factory = RAGComponentFactory(config=self.config)
         self.template_provider = MilStackTemplateProvider()
         
         # Initialize core components
@@ -32,7 +32,7 @@ class RAGPipeline:
         
         logging.info(f"Embedding {len(documents)} documents...")
         self.doc_embedder.warm_up()
-        result = self.doc_embedder.run(documents=documents)
+        result = self.doc_embedder.run(documents=documents) 
         logging.info("Writing documents to Milvus document store...")
         self.document_store.write_documents(result["documents"])
         logging.info(f"Successfully stored {len(documents)} documents in Milvus")

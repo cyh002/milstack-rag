@@ -17,11 +17,11 @@ llm:
 
 # Embedding Configuration
 embedding:
-  provider: "sentence_transformer"
+  provider: "sentence_transformers"
 
-  sentence_transformer:
-    document_embedder: ${oc.env:SENTENCE_TRANSFORMER_MODEL_NAME}
-    text_embedder: ${oc.env:SENTENCE_TRANSFORMER_MODEL_PATH}
+  sentence_transformers:
+    document_embedder: ${oc.env:SENTENCE_TRANSFORMERS_MODEL_NAME}
+    text_embedder: ${oc.env:SENTENCE_TRANSFORMERS_MODEL_NAME}
 
   openai:
     model_name: ${oc.env:OPENAI_EMBEDDINGS_MODEL_NAME}
@@ -33,6 +33,7 @@ embedding:
 vector_db:
   load_type: ${oc.env:MILVUS_LOAD_TYPE}
   uri: ${oc.env:MILVUS_URI}
+  db_path: ${oc.env:DB_PATH}
   host: ${oc.env:MILVUS_HOST}
   port: ${oc.env:MILVUS_PORT}
   collection_name: ${oc.env:MILVUS_COLLECTION}
