@@ -2,7 +2,7 @@
 RAG application using Haystack, vLLM, and Seven Wonders dataset.
 """
 from typing import Any, List
-from components.document_loader import DocumentLoader
+from components.document_manager import DocumentManager
 from pipeline.rag_pipeline import RAGPipeline
 from ui.gradio_interface import RAGUIInterface
 
@@ -11,14 +11,15 @@ class MilstackRAG:
     
     def __init__(self, config=None):
         self.config = config
-        self.doc_loader = DocumentLoader(datasets_config = self.config.get("datasets", {}))
+        self.document_manager = DocumentManager(
+            datasets_config=self.config.get("datasets"))
         self.rag_pipeline = RAGPipeline(config = self.config)
         self.ui = None
         
     def setup(self):
         """Set up all components of the application."""
         # Load documents
-        documents = self.doc_loader.load_documents()
+        documents = self.document_manager.load_documents()
         
         # Setup pipeline
         self.rag_pipeline.setup_document_store(documents)
