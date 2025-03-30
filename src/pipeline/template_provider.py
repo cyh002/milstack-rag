@@ -20,7 +20,7 @@ class TemplateProvider(ABC):
         """Returns the query rephrase template."""
         pass
 
-class SevenWondersTemplateProvider(TemplateProvider):
+class MilStackTemplateProvider(TemplateProvider):
     """Template provider for Seven Wonders dataset."""
     
     def get_system_message(self) -> ChatMessage:

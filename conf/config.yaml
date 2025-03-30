@@ -1,0 +1,57 @@
+# LLM Configuration
+llm:
+  provider: "local"
+  
+  # vLLM Configuration
+  local:
+    model_name: ${oc.env:VLLM_MODEL_NAME}
+    base_url: ${oc.env:VLLM_BASE_URL}
+    api_key: ${oc.env:VLLM_API_KEY}
+    
+  # OpenAI Configuration
+  openai:
+    model_name: ${oc.env:OPENAI_MODEL_NAME}
+    api_base: ${oc.env:OPENAI_API_BASE}
+    api_type: ${oc.env:OPENAI_API_TYPE}
+    api_key: ${oc.env:OPENAI_API_KEY}
+
+# Embedding Configuration
+embedding:
+  provider: "sentence_transformer"
+
+  sentence_transformer:
+    document_embedder: ${oc.env:SENTENCE_TRANSFORMER_MODEL_NAME}
+    text_embedder: ${oc.env:SENTENCE_TRANSFORMER_MODEL_PATH}
+
+  openai:
+    model_name: ${oc.env:OPENAI_EMBEDDINGS_MODEL_NAME}
+    api_base: ${oc.env:OPENAI_API_BASE}
+    api_type: ${oc.env:OPENAI_API_TYPE}
+    api_key: ${oc.env:OPENAI_API_KEY}
+
+# Vector Database Configuration
+vector_db:
+  load_type: ${oc.env:MILVUS_LOAD_TYPE}
+  uri: ${oc.env:MILVUS_URI}
+  host: ${oc.env:MILVUS_HOST}
+  port: ${oc.env:MILVUS_PORT}
+  collection_name: ${oc.env:MILVUS_COLLECTION}
+  dimension: ${oc.env:MILVUS_DIMENSION}
+  recreate: true
+
+# Data Paths
+datasets:
+  knowledge_path: ./src/data/knowledge
+  personal_path: ./src/data/personal
+  persona_path: ./src/data/persona
+  chats_path: ./src/data/chats
+  huggingface: 
+  - "bilgeyucel/seven-wonders"
+
+# Pipeline Configuration
+pipeline:
+  retriever:
+    top_k: 5
+  generator:
+    max_tokens: 1024
+    temperature: 0.7

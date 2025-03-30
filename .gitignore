@@ -12,3 +12,8 @@ wheels/
 
 *.log
 *.csv
+
+milvus.db
+pipeline.png
+
+data/* 

@@ -5,11 +5,17 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "anthropic>=0.49.0",
     "datasets>=3.4.1",
+    "google>=3.0.0",
+    "google-genai>=1.8.0",
     "gradio>=5.23.0",
     "haystack-ai>=2.11.2",
     "haystack-experimental>=0.8.0",
+    "milvus-haystack[lite]>=0.0.14",
     "ollama-haystack>=2.3.0",
+    "omegaconf>=2.3.0",
+    "openrouter>=1.0",
     "sentence-transformers>=3.4.1",
     "vllm>=0.8.1",
 ]

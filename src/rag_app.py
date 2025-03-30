@@ -2,17 +2,17 @@
 RAG application using Haystack, vLLM, and Seven Wonders dataset.
 """
 from typing import Any, List
-
-from data.document_loader import DocumentLoader
+from components.document_loader import DocumentLoader
 from pipeline.rag_pipeline import RAGPipeline
 from ui.gradio_interface import RAGUIInterface
 
-class SevenWondersRAG:
+class MilstackRAG:
     """Main application class combining all components."""
     
-    def __init__(self, model_name="SeaLLMs/SeaLLMs-v3-1.5B-Chat"):
-        self.doc_loader = DocumentLoader("bilgeyucel/seven-wonders")
-        self.rag_pipeline = RAGPipeline(model_name=model_name)
+    def __init__(self, config=None):
+        self.config = config
+        self.doc_loader = DocumentLoader(datasets_config = config.get("datasets", {}))
+        self.rag_pipeline = RAGPipeline(config = config)
         self.ui = None
         
     def setup(self):

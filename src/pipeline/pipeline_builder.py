@@ -14,6 +14,8 @@ from components.list_joiner import ListJoiner
 from pipeline.template_provider import TemplateProvider
 from pipeline.component_factory import ComponentFactory
 
+from milvus_haystack.milvus_embedding_retriever import MilvusEmbeddingRetriever
+
 class PipelineBuilder:
     """Builder for constructing RAG pipelines."""
     
@@ -46,7 +48,7 @@ class PipelineBuilder:
         
         # RAG components - use the document_store as a parameter, not a component
         document_store = self.components.get("document_store")
-        self.components["retriever"] = InMemoryEmbeddingRetriever(document_store=document_store)
+        self.components["retriever"] = self.component_factory.create_retriever(document_store)
         
         self.components["prompt_builder"] = ChatPromptBuilder(
             template=self.template_provider.get_main_template(),
@@ -80,9 +82,9 @@ class PipelineBuilder:
         self.pipeline.connect("query_rephrase_llm.replies", "list_to_str_adapter")
         
         # Connect embedding to retriever
-        self.pipeline.connect("text_embedder.embedding", "retriever.query_embedding")
         self.pipeline.connect("list_to_str_adapter", "text_embedder.text")
-        
+        self.pipeline.connect("text_embedder.embedding", "retriever.query_embedding")
+
         # RAG connections
         self.pipeline.connect("retriever.documents", "prompt_builder.documents")
         self.pipeline.connect("prompt_builder.prompt", "llm.messages")
