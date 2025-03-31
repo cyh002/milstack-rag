@@ -18,7 +18,32 @@ class DocumentLoader:
             'json': JSONProcessor(),
             'huggingface': HuggingFaceProcessor()
         }
-    
+        self.validate_processors()
+        logger.info("DocumentLoader initialized with processors: %s", list(self.processors.keys()))
+
+    def validate_processors(self):
+        """Validate the processors based on the datasets_config."""
+        # Get the 'include' value from datasets_config
+        included_processors = self.datasets_config.get('include')
+        logger.info("Included processors from config: %s", included_processors)
+        # If include is None/null (~), keep all processors (default behavior)
+        if included_processors is None:
+            logger.info("No specific processors included, using all available processors")
+            return
+        # Check if all specified processors exist
+        unknown_processors = [p for p in included_processors if p not in self.processors]
+        if unknown_processors:
+            raise ValueError(f"Unknown processor types: {unknown_processors}. Available types: {list(self.processors.keys())}")
+        
+        # Always keep 'huggingface' processor if it has datasets configured
+        hf_datasets = self.datasets_config.get('huggingface', [])
+        keep_huggingface = len(hf_datasets) > 0
+        
+        # Filter processors to only include those specified
+        self.processors = {k: v for k, v in self.processors.items() 
+                        if k in included_processors or (k == 'huggingface' and keep_huggingface)}
+        logger.info(f"Using processors: {list(self.processors.keys())}")
+
     def load_all_documents(self) -> List[Document]:
         """Load all documents from configured sources."""
         documents = []
@@ -35,7 +60,6 @@ class DocumentLoader:
                     files = list(base_path.glob(f'**/*{processor.file_extension}'))
                     file_paths = [str(f) for f in files]
                     if file_paths:
-                        logger.info(f"Found {len(file_paths)} {processor.file_extension} files in {base_dir}")
                         documents.extend(processor.process(file_paths))
                         logger.info(f"Loaded {len(file_paths)} documents from {processor_key} files")
                     else:

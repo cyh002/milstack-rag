@@ -43,8 +43,11 @@ vector_db:
 # Data Paths
 datasets:
   dir_key: ./data
+  include:
+    - txt
+    - csv
   huggingface: 
-  - "bilgeyucel/seven-wonders"
+    - "bilgeyucel/seven-wonders"
 
 preprocessor: ~
 
