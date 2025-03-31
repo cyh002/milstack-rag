@@ -43,8 +43,9 @@ vector_db:
 # Data Paths
 datasets:
   dir_key: ./data
-  include: 
+  include:
     - txt
+    - pdf
     - huggingface
   huggingface: 
     - "bilgeyucel/seven-wonders"
@@ -61,7 +62,8 @@ pipeline:
 
 # Indexing Configuration
 indexing:
-  enabled: true
+  enabled: true  # Set to false to disable indexing
   strategy: "full"  # Options: full, incremental
   split_by: "sentence" 
   split_length: 2
+  split_overlap: 0

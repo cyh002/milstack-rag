@@ -9,10 +9,9 @@ from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever
 from haystack.components.builders import ChatPromptBuilder
 from haystack.components.converters import OutputAdapter
 
-from components.list_joiner import ListJoiner
-
 from pipeline.template_provider import TemplateProvider
 from pipeline.component_factory import ComponentFactory
+from components.memory_store import ListJoiner
 
 from milvus_haystack.milvus_embedding_retriever import MilvusEmbeddingRetriever
 

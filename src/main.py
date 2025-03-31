@@ -7,6 +7,8 @@ from components.config import ConfigLoader
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from components.unified_document_manager import UnifiedDocumentManager
+from pipeline.component_factory import RAGComponentFactory
 
 def setup_logging():
     """Set up logging configuration."""
@@ -42,6 +44,32 @@ def setup_config():
     config_loader = ConfigLoader(config_path)
     return config_loader
 
+def initialize_document_system(config):
+    """Initialize the document processing system."""
+    # Create component factory
+    component_factory = RAGComponentFactory(config)
+    
+    # Create document store and embedder
+    document_store = component_factory.create_document_store()
+    document_embedder = component_factory.create_document_embedder()
+    
+    # Create document manager
+    doc_manager = UnifiedDocumentManager(
+        document_store=document_store,
+        document_embedder=document_embedder,
+        config=config
+    )
+    
+    # Process documents (will either load or index based on config)
+    result = doc_manager.process_documents()
+    
+    if isinstance(result, int):
+        logging.info(f"Indexed {result} documents")
+    else:
+        logging.info(f"Loaded {len(result)} documents without indexing")
+        
+    return doc_manager, document_store
+
 def test_query(app):
     """Test query function."""
     # Example test query
@@ -70,6 +98,10 @@ def main():
     app = MilstackRAG(config=config).setup()
     logging.info("Application setup complete.")
     logging.info("Ready to accept queries.")
+
+    # Initialize document system
+    doc_manager, document_store = initialize_document_system(config)
+    logging.info("Document system initialized successfully.")
 
     # Example query
     logging.info("Running test query...")
