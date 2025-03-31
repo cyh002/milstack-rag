@@ -42,12 +42,11 @@ vector_db:
 
 # Data Paths
 datasets:
-  knowledge_path: ./src/data/knowledge
-  personal_path: ./src/data/personal
-  persona_path: ./src/data/persona
-  chats_path: ./src/data/chats
+  dir_key: ./data
   huggingface: 
   - "bilgeyucel/seven-wonders"
+
+preprocessor: ~
 
 # Pipeline Configuration
 pipeline:

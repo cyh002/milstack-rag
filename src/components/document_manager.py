@@ -12,6 +12,8 @@ from haystack.components.converters import (
 from haystack.components.preprocessors import DocumentSplitter
 from haystack.components.writers import DocumentWriter
 
+from .document_utils.loader import DocumentLoader
+
 class DocumentManager:
     """Handles loading, processing and indexing of documents from various sources."""
     
@@ -19,96 +21,43 @@ class DocumentManager:
         self.datasets_config = datasets_config or {}
         self.document_store = None
         self.embedder = None
+        self.loader = DocumentLoader(self.datasets_config)
     
-    # Document loading methods (from DocumentLoader)
+    def set_components(self, document_store, embedder):
+        """Set the document store and embedder components."""
+        self.document_store = document_store
+        self.embedder = embedder
+    
     def load_documents(self) -> List[Document]:
-        """Main method to load all configured documents."""
-        documents = []
-        
-        # Load Hugging Face datasets
-        hf_documents = self.load_hf_documents()
-        documents.extend(hf_documents)
-        
-        print(f"Loaded {len(documents)} documents in total")
-        return documents
+        """Load all documents without indexing them."""
+        return self.loader.load_all_documents()
     
-    def load_hf_documents(self) -> List[Document]:
-        """Load documents from Hugging Face datasets specified in config."""
-        all_documents = []
-        
-        # Get the list of Hugging Face datasets from config
-        hf_datasets = self.datasets_config.get("huggingface", [])
-        
-        for dataset_name in hf_datasets:
-            try:
-                print(f"Loading Hugging Face dataset: {dataset_name}")
-                dataset = load_dataset(dataset_name, split="train")
-                
-                if len(dataset) == 0:
-                    print(f"Warning: Dataset {dataset_name} returned empty results")
-                    continue
-                    
-                # Convert dataset items to Haystack Documents
-                documents = [Document(content=doc["content"], meta=doc.get("meta", {})) 
-                             for doc in dataset]
-                
-                all_documents.extend(documents)
-                print(f"Loaded {len(documents)} documents from dataset '{dataset_name}'")
-                
-            except Exception as e:
-                print(f"Error loading dataset {dataset_name}: {str(e)}")
-        
-        return all_documents
-    
-    # Document processing methods (from DocumentProcessor)
-    def process_documents(self, file_paths: List[str], chunk_size: int = 500, 
-                          chunk_overlap: int = 50) -> int:
-        """Process and index documents from various file types."""
+    def load_and_index_documents(self, chunk_size: int = 500, chunk_overlap: int = 50) -> int:
+        """Load all documents, process them, and index them in the document store."""
         if not self.document_store or not self.embedder:
-            raise ValueError("Document store and embedder must be set before processing documents. This should be initialized in RAGPipeline.")
-            
-        # Group files by extension
-        txt_files = [f for f in file_paths if f.lower().endswith('.txt')]
-        pdf_files = [f for f in file_paths if f.lower().endswith('.pdf')]
-        csv_files = [f for f in file_paths if f.lower().endswith('.csv')]
+            raise ValueError("Document store and embedder must be set before processing documents.")
         
-        documents = []
+        # Load all documents
+        documents = self.loader.load_all_documents()
+        if not documents:
+            print("No documents found to process.")
+            return 0
         
-        # Process each file type with appropriate converter
-        if txt_files:
-            documents.extend(self._process_text_files(txt_files))
+        # Split documents into chunks
+        splitter = DocumentSplitter(
+            split_by="word", 
+            split_length=chunk_size,
+            split_overlap=chunk_overlap
+        )
+        split_docs = splitter.run(documents=documents)["documents"]
         
-        if pdf_files:
-            documents.extend(self._process_pdf_files(pdf_files))
-            
-        if csv_files:
-            documents.extend(self._process_csv_files(csv_files))
+        # Embed documents
+        embedded_docs = self.embedder.run(documents=split_docs)["documents"]
         
-        # Split documents
-        if documents:
-            splitter = DocumentSplitter(
-                split_by="word", 
-                split_length=chunk_size,
-                split_overlap=chunk_overlap
-            )
-            split_docs = splitter.run(documents=documents)["documents"]
-            
-            # Embed and index documents
-            embedded_docs = self.embedder.run(documents=split_docs)["documents"]
-            self.document_store.write_documents(embedded_docs)
-            
-            return len(embedded_docs)
+        # Index documents
+        self.document_store.write_documents(embedded_docs)
         
-        return 0
+        print(f"Processed and indexed {len(embedded_docs)} document chunks")
+        return len(embedded_docs)
     
-    def _process_text_files(self, file_paths: List[str]) -> List[Document]:
-        converter = TextFileToDocument()
-        return converter.run(sources=file_paths)["documents"]
     
-    def _process_pdf_files(self, file_paths: List[str]) -> List[Document]:
-        converter = PyPDFToDocument()
-        return converter.run(sources=file_paths)["documents"]
-    
-    def _process_csv_files(self, file_paths: List[str]) -> List[Document]:
-        converter = CSVToDocument()
-        return converter.run(sources=file_paths)["documents"]
