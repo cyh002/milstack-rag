@@ -43,9 +43,9 @@ vector_db:
 # Data Paths
 datasets:
   dir_key: ./data
-  include:
+  include: 
     - txt
-    - csv
+    - huggingface
   huggingface: 
     - "bilgeyucel/seven-wonders"
 
@@ -58,3 +58,10 @@ pipeline:
   generator:
     max_tokens: 1024
     temperature: 0.7
+
+# Indexing Configuration
+indexing:
+  enabled: true
+  strategy: "full"  # Options: full, incremental
+  split_by: "sentence" 
+  split_length: 2

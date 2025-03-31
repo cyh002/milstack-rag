@@ -97,10 +97,14 @@ class RAGPipeline(BasePipeline):
             "query_rephrase_prompt_builder": {"query": question},
             "prompt_builder": {"question": question},
             "memory_joiner": {"values": [ChatMessage.from_user(question)]}
-        }, include_outputs_from=["query_rephrase_llm", "llm"])
+        }, include_outputs_from=["query_rephrase_llm", "llm", "retriever"])
 
         # Log the rephrased query for debugging
         rephrased_query = response.get("query_rephrase_llm", {}).get("replies", [""])[0]
         self.logger.info(f"Rephrased query: {rephrased_query}")
+        self.logger.info(f"LLM response: {response['llm']['replies'][0].text}")
+        # Supporting Documents:
+        self.logger.info(f"Supporting documents: {response['retriever']['documents']}")
+
 
         return response["llm"]["replies"][0].text

@@ -13,6 +13,7 @@ dependencies = [
     "haystack-ai>=2.11.2",
     "haystack-experimental>=0.8.0",
     "milvus-haystack[lite]>=0.0.14",
+    "nltk>=3.9.1",
     "ollama-haystack>=2.3.0",
     "omegaconf>=2.3.0",
     "openrouter>=1.0",
