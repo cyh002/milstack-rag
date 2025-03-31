@@ -4,11 +4,7 @@ import os
 
 from datasets import load_dataset
 from haystack import Pipeline, Document
-from haystack.components.converters import (
-    TextFileToDocument,
-    PyPDFToDocument,
-    CSVToDocument
-)
+
 from haystack.components.preprocessors import DocumentSplitter
 from haystack.components.writers import DocumentWriter
 
