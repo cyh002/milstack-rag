@@ -16,6 +16,7 @@ dependencies = [
     "ollama-haystack>=2.3.0",
     "omegaconf>=2.3.0",
     "openrouter>=1.0",
+    "pypdf>=5.4.0",
     "sentence-transformers>=3.4.1",
     "vllm>=0.8.1",
 ]

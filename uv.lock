@@ -1144,6 +1144,7 @@ dependencies = [
     { name = "ollama-haystack" },
     { name = "omegaconf" },
     { name = "openrouter" },
+    { name = "pypdf" },
     { name = "sentence-transformers" },
     { name = "vllm" },
 ]
@@ -1161,6 +1162,7 @@ requires-dist = [
     { name = "ollama-haystack", specifier = ">=2.3.0" },
     { name = "omegaconf", specifier = ">=2.3.0" },
     { name = "openrouter", specifier = ">=1.0" },
+    { name = "pypdf", specifier = ">=5.4.0" },
     { name = "sentence-transformers", specifier = ">=3.4.1" },
     { name = "vllm", specifier = ">=0.8.1" },
 ]
@@ -2108,6 +2110,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/43/02/85ce4bc154d5f75e466d92e8112f09f67534fe82aaedf7dd22c6cb70433d/pymilvus-2.5.6.tar.gz", hash = "sha256:2bea0b03ed9ac3daadb1b2df8e38aa5c8f4aabd00b23a4999abb4adaebf54f59", size = 1256288 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/06/4f/169ffe72bc628bf89be7770f2ef60f90fd73588c6ceb25d47f1bb00ade02/pymilvus-2.5.6-py3-none-any.whl", hash = "sha256:19796f328278974f04632a1531e602070614f6ab0865cc97e27755f622e50a6d", size = 223410 },
+]
+
+[[package]]
+name = "pypdf"
+version = "5.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f9/43/4026f6ee056306d0e0eb04fcb9f2122a0f1a5c57ad9dc5e0d67399e47194/pypdf-5.4.0.tar.gz", hash = "sha256:9af476a9dc30fcb137659b0dec747ea94aa954933c52cf02ee33e39a16fe9175", size = 5012492 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0b/27/d83f8f2a03ca5408dc2cc84b49c0bf3fbf059398a6a2ea7c10acfe28859f/pypdf-5.4.0-py3-none-any.whl", hash = "sha256:db994ab47cadc81057ea1591b90e5b543e2b7ef2d0e31ef41a9bfe763c119dab", size = 302306 },
 ]
 
 [[package]]
