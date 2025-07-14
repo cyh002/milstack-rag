@@ -13,7 +13,7 @@ from pipeline.template_provider import TemplateProvider
 from pipeline.component_factory import ComponentFactory
 from components.memory_store import ListJoiner
 
-from milvus_haystack.milvus_embedding_retriever import MilvusEmbeddingRetriever
+from milvus_haystack.milvus_embedding_retriever import MilvusEmbeddingRetriever, MilvusHybridRetriever
 
 class PipelineBuilder:
     """Builder for constructing RAG pipelines."""
@@ -31,9 +31,13 @@ class PipelineBuilder:
         memory_components = self.component_factory.create_memory_components()
         self.components.update(memory_components)
         
-        # Text embedder
-        text_embedder = self.component_factory.create_text_embedder()
-        self.components["text_embedder"] = text_embedder
+        # Dense Text embedder
+        dense_text_embedder  = self.component_factory.create_dense_text_embedder()
+        self.components["dense_text_embedder"] = dense_text_embedder 
+
+        # Sparse Text embedder
+        sparse_text_embedder = self.component_factory.create_sparse_text_embedder()
+        self.components["sparse_text_embedder"] = sparse_text_embedder
         
         # Query rephrasing components
         self.components["query_rephrase_prompt_builder"] = ChatPromptBuilder(
@@ -47,7 +51,15 @@ class PipelineBuilder:
         
         # RAG components - use the document_store as a parameter, not a component
         document_store = self.components.get("document_store")
+        if not document_store:
+            raise ValueError("Document store not found in components. It should be added before calling add_components.")
+        
         self.components["retriever"] = self.component_factory.create_retriever(document_store)
+        if not isinstance(self.components["retriever"], MilvusHybridRetriever):
+            self.components.logger.warning(
+                f"Expected MilvusHybridRetriever, but got {type(self.components['retriever'])}. "
+                "Ensure RAGComponentFactory.create_retriever is set up for hybrid."
+            )
         
         self.components["prompt_builder"] = ChatPromptBuilder(
             template=self.template_provider.get_main_template(),
@@ -62,7 +74,7 @@ class PipelineBuilder:
         
         # Add only actual components to pipeline
         component_names = [
-            "memory_retriever", "memory_writer", "text_embedder", 
+            "memory_retriever", "memory_writer", "dense_text_embedder", "sparse_text_embedder",
             "query_rephrase_prompt_builder", "query_rephrase_llm", "list_to_str_adapter",
             "retriever", "prompt_builder", "llm", "memory_joiner"
         ]
@@ -70,7 +82,8 @@ class PipelineBuilder:
         for name in component_names:
             if name in self.components:
                 self.pipeline.add_component(name, self.components[name])
-        
+            else:
+                logging.warning(f"PipelineBuilder: Component {name} was expected but not found in self.components.")
         return self
     
     def connect_components(self) -> 'PipelineBuilder':
@@ -81,8 +94,11 @@ class PipelineBuilder:
         self.pipeline.connect("query_rephrase_llm.replies", "list_to_str_adapter")
         
         # Connect embedding to retriever
-        self.pipeline.connect("list_to_str_adapter", "text_embedder.text")
-        self.pipeline.connect("text_embedder.embedding", "retriever.query_embedding")
+        self.pipeline.connect("list_to_str_adapter", "dense_text_embedder.text")
+        self.pipeline.connect("list_to_str_adapter", "sparse_text_embedder.text")
+        self.pipeline.connect("dense_text_embedder.embedding", "retriever.query_embedding")
+        self.pipeline.connect("sparse_text_embedder.sparse_embedding", "retriever.query_sparse_embedding")
+        
 
         # RAG connections
         self.pipeline.connect("retriever.documents", "prompt_builder.documents")

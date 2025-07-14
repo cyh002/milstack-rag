@@ -1,69 +1,84 @@
 # LLM Configuration
 llm:
-  provider: "local"
-  
-  # vLLM Configuration
-  local:
+  provider: "local" # "local" (for VLLM) or "openai"
+
+  local: # Corresponds to VLLM settings
     model_name: ${oc.env:VLLM_MODEL_NAME}
     base_url: ${oc.env:VLLM_BASE_URL}
-    api_key: ${oc.env:VLLM_API_KEY}
-    
-  # OpenAI Configuration
+    api_key: ${oc.env:VLLM_API_KEY} # Your LLMProvider will decide if/how to use this
+
   openai:
     model_name: ${oc.env:OPENAI_MODEL_NAME}
-    api_base: ${oc.env:OPENAI_API_BASE}
-    api_type: ${oc.env:OPENAI_API_TYPE}
     api_key: ${oc.env:OPENAI_API_KEY}
+    # api_base: ${oc.env:OPENAI_API_BASE} # Usually not needed if using official Haystack OpenAI components
+    # api_type: ${oc.env:OPENAI_API_TYPE} # Usually specific to Azure, not needed for standard OpenAI
 
 # Embedding Configuration
 embedding:
-  provider: "sentence_transformers"
+  # Provider for the DENSE embedder primarily, sparse is often specific (e.g. FastEmbed)
+  dense_provider: "sentence_transformers" # "sentence_transformers" or "openai"
 
-  sentence_transformers:
-    document_embedder: ${oc.env:SENTENCE_TRANSFORMERS_MODEL_NAME}
-    text_embedder: ${oc.env:SENTENCE_TRANSFORMERS_MODEL_NAME}
+  sentence_transformers: # For Dense Embeddings
+    document_embedder: ${oc.env:DENSE_EMBEDDING_MODEL_NAME}
+    text_embedder: ${oc.env:DENSE_EMBEDDING_MODEL_NAME}
+    # model_kwargs: {"trust_remote_code": True} # If needed for your specific ST model
 
-  openai:
+  openai_embedding: # For Dense Embeddings if using OpenAI
     model_name: ${oc.env:OPENAI_EMBEDDINGS_MODEL_NAME}
-    api_base: ${oc.env:OPENAI_API_BASE}
-    api_type: ${oc.env:OPENAI_API_TYPE}
     api_key: ${oc.env:OPENAI_API_KEY}
+    # api_base: ${oc.env:OPENAI_API_BASE}
+
+  sparse_embedder: # NEW section for Sparse Embeddings (e.g., SPLADE via FastEmbed)
+    model: ${oc.env:SPARSE_EMBEDDING_MODEL_NAME}
+    # cache_dir: "/path/to/cache" # Optional for FastEmbed
 
 # Vector Database Configuration
 vector_db:
-  load_type: ${oc.env:MILVUS_LOAD_TYPE}
-  uri: ${oc.env:MILVUS_URI}
-  db_path: ${oc.env:DB_PATH}
-  host: ${oc.env:MILVUS_HOST}
-  port: ${oc.env:MILVUS_PORT}
-  collection_name: ${oc.env:MILVUS_COLLECTION}
-  dimension: ${oc.env:MILVUS_DIMENSION}
-  recreate: true
+  load_type: ${oc.env:MILVUS_LOAD_TYPE} # "milvus-lite" or "milvus-server"
+  collection_name: ${oc.env:MILVUS_COLLECTION_NAME}
+  drop_old: true # Set to false in production after initial indexing
 
-# Data Paths
+  # Configuration for Milvus Lite (uses db_path as part of connection_args.uri)
+  db_path: ${oc.env:MILVUS_LITE_DB_PATH}
+
+  # Configuration for Milvus Server (uses uri directly)
+  uri: ${oc.env:MILVUS_SERVER_URI} # e.g., http://localhost:19530
+  # user: ${oc.env:MILVUS_USER} # If using Milvus server with auth
+  # password: ${oc.env:MILVUS_PASSWORD} # If using Milvus server with auth
+
+  # Field name for sparse vectors in Milvus
+  sparse_vector_field: ${oc.env:MILVUS_SPARSE_VECTOR_FIELD_NAME}
+
+  # Dimension of DENSE embeddings (for reference, Milvus infers it, but embedders might need it)
+  dense_dimension: ${oc.env:DENSE_EMBEDDING_DIMENSION}
+
+# Data Paths (example, adjust as needed)
 datasets:
   dir_key: ./data
   include:
-    - txt
-    - pdf
     - huggingface
-  huggingface: 
+    - txt
+    # csv, json, etc. can be added as needed
+  huggingface:
     - "bilgeyucel/seven-wonders"
 
-preprocessor: ~
+preprocessor: ~ # You might configure Haystack Preprocessor components here
 
-# Pipeline Configuration
+# Pipeline Configuration (for RAG query pipeline)
 pipeline:
   retriever:
     top_k: 5
-  generator:
+  generator: # For the final answer generation LLM
     max_tokens: 1024
     temperature: 0.7
+  # query_rephrasing_llm: # Optional: if you want different params for rephrasing LLM
+  #   max_tokens: 256
+  #   temperature: 0.3
 
-# Indexing Configuration
+# Indexing Configuration (general settings, your RAGPipeline.index_documents handles the Haystack part)
 indexing:
-  enabled: true  # Set to false to disable indexing
-  strategy: "full"  # Options: full, incremental
-  split_by: "sentence" 
-  split_length: 2
-  split_overlap: 0
+  enabled: true
+  # strategy: "full"
+  # split_by: "sentence"
+  # split_length: 2
+  # split_overlap: 0

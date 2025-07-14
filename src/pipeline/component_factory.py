@@ -17,12 +17,12 @@ class ComponentFactory(ABC):
         pass
     
     @abstractmethod
-    def create_document_embedder(self, provider: str = "sentence_transformers") -> Any:
+    def create_dense_document_embedder(self, provider: str = "sentence_transformers") -> Any:
         """Creates and returns a document embedder."""
         pass
     
     @abstractmethod
-    def create_text_embedder(self, provider: str = "sentence_transformers") -> Any:
+    def create_dense_text_embedder(self, provider: str = "sentence_transformers") -> Any:
         """Creates and returns a text embedder."""
         pass
     
@@ -54,11 +54,19 @@ class RAGComponentFactory(ComponentFactory):
     def create_document_store(self) -> MilvusDocumentStore:
         return self.document_store_factory.create_document_store()
     
-    def create_document_embedder(self, provider: str = "sentence_transformers", **kwargs) -> Any:
-        return self.embedder_factory.create_document_embedder(provider, **kwargs)
+    def create_dense_document_embedder(self, provider: str = "sentence_transformers", **kwargs) -> Any:
+        return self.embedder_factory.create_dense_document_embedder(provider, **kwargs)
     
-    def create_text_embedder(self, provider: str = "sentence_transformers", **kwargs) -> Any:
-        return self.embedder_factory.create_text_embedder(provider, **kwargs)
+    def create_dense_text_embedder(self, provider: str = "sentence_transformers", **kwargs) -> Any:
+        return self.embedder_factory.create_dense_text_embedder(provider, **kwargs)
+    
+    def create_sparse_document_embedder(self, **kwargs) -> Any:
+        """Creates and returns a sparse document embedder."""
+        return self.embedder_factory.create_sparse_document_embedder(**kwargs)
+    
+    def create_sparse_text_embedder(self, **kwargs) -> Any:
+        """Creates and returns a sparse text embedder."""
+        return self.embedder_factory.create_sparse_text_embedder(**kwargs)
     
     def create_memory_components(self) -> Dict[str, Any]:
         return self.memory_store_factory.create_memory_components()
